@@ -12,6 +12,7 @@ import geopandas as gpd
 import bootstrap
 from pathlib import Path
 import pickle
+from collections import defaultdict
 
 
 WIDTH = 6.4
@@ -34,7 +35,6 @@ mpl.use('agg')
 
 
 def plot_H_KL(df_cdf, norm_H_series, mean_kl_series, fig_path=None):
-    print('HERE')
     fig, ax = plt.subplots(1, 1, figsize=(WIDTH, HEIGHT), dpi=DPI)
     ax.set_ylabel(r'$H$')
     ax.set_xlabel('Percentile rank p')
@@ -60,7 +60,7 @@ def plot_H_KL(df_cdf, norm_H_series, mean_kl_series, fig_path=None):
 
     plt.tight_layout()
     if fig_path is not None:
-        fig.savefig(fig_path / 'cont_variables.eps', dpi=DPI)
+        # fig.savefig(fig_path / 'cont_variables.eps', dpi=DPI)
         fig.savefig(fig_path / 'cont_variables.pdf', dpi=DPI)
 
 
@@ -76,13 +76,19 @@ def plot_local_c_profiles(C_ds, extension='bokeh', q=5):
     return profile
 
 
-def get_missing_agebs(state_code, met_zone_codes, data_path, pop_income):
+def get_missing_agebs(met_zone_codes, data_path, pop_income):
 
-    agebs_gdf = gpd.read_file(
-        f'{data_path}/agebs.zip', layer=f'{state_code:02d}a')
+    scodes = np.unique([c // 1000 for c in met_zone_codes])
+    agebs_gdf = pd.concat([
+        gpd.read_file(
+            f'{data_path}/agebs.zip', layer=f'{scode:02d}a')
+        for scode in scodes
+    ])
+
     agebs_gdf = agebs_gdf.to_crs(agebs_gdf.estimate_utm_crs())
-    agebs_gdf['CVE_MUN'] = agebs_gdf.CVE_MUN.astype(int)
-    agebs_gdf = agebs_gdf[agebs_gdf['CVE_MUN'].isin(met_zone_codes)]
+    agebs_gdf['CVE_MZ'] = agebs_gdf.CVE_ENT.astype(int)*1000 \
+        + agebs_gdf.CVE_MUN.astype(int)
+    agebs_gdf = agebs_gdf[agebs_gdf['CVE_MZ'].isin(met_zone_codes)]
     agebs_gdf.columns = [i.lower() for i in agebs_gdf.columns]
     agebs_df = agebs_gdf[['cvegeo', 'geometry']].copy()
     missing_agebs = pd.merge(right=pop_income, left=agebs_df,
@@ -95,7 +101,7 @@ def get_missing_agebs(state_code, met_zone_codes, data_path, pop_income):
     return missing_agebs
 
 
-def plot_income_pc(pop_income, state_code, met_zone_codes,
+def plot_income_pc(pop_income, met_zone_codes,
                    data_path, fig_path=None):
 
     minx, miny, maxx, maxy = pop_income.total_bounds
@@ -114,12 +120,12 @@ def plot_income_pc(pop_income, state_code, met_zone_codes,
                     cmap='viridis', edgecolor='grey', linewidth=LW)
 
     missing_agebs = get_missing_agebs(
-        state_code, met_zone_codes, data_path, pop_income)
+        met_zone_codes, data_path, pop_income)
     missing_agebs.plot(ax=ax[0], facecolor='lightgrey',
                        edgecolor='grey', linewidth=LW)
 
     if fig_path is not None:
-        fig.savefig(fig_path / 'income_pc.eps', dpi=DPI)
+        # fig.savefig(fig_path / 'income_pc.eps', dpi=DPI)
         fig.savefig(fig_path / 'income_pc.pdf', dpi=DPI)
 
 
@@ -188,7 +194,7 @@ def plot_cent_idxs(pop_income, C_ds, res_bs, fig_path=None):
     plt.colorbar(sm, cax=cax)
 
     if fig_path is not None:
-        fig.savefig(fig_path / 'centrality.eps', dpi=DPI)
+        # fig.savefig(fig_path / 'centrality.eps', dpi=DPI)
         fig.savefig(fig_path / 'centrality.pdf', dpi=DPI)
 
 
@@ -220,15 +226,14 @@ def plot_cis(results, res_bs,  fig_path=None):
     plt.tight_layout()
 
     if fig_path is not None:
-        fig.savefig(fig_path / 'conf_intervals.eps', dpi=DPI)
+        # fig.savefig(fig_path / 'conf_intervals.eps', dpi=DPI)
         fig.savefig(fig_path / 'conf_intervals.pdf', dpi=DPI)
 
 
-def make_all(state_code, met_zone_codes,
-             opath, inpath):
+def make_all(met_zone_codes, opath, inpath):
     fig_path = Path(opath / 'figures')
 
-    print(f'Making figures for state {state_code} ...')
+    print('Making figures for metropolitan zone ...')
     print('Loading data ...')
     with open(opath / 'results.pkl', 'rb') as f:
         results = pickle.load(f)
@@ -248,7 +253,7 @@ def make_all(state_code, met_zone_codes,
     plot_H_KL(df_cdf, norm_H_series, mean_kl_series, fig_path)
     print('Done.')
     print('Making plot of income per capita ...')
-    plot_income_pc(pop_income, state_code, met_zone_codes,
+    plot_income_pc(pop_income, met_zone_codes,
                    inpath, fig_path)
     print('Done.')
     print('Making plot of centrality index ...')

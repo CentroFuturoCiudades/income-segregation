@@ -152,7 +152,7 @@ def weight_ind_fast(df, ds, agebs):
     return df_w
 
 
-def get_income_df(ds, df_censo, df_ind, data_path, state_code, agebs):
+def get_income_df(ds, df_censo, df_ind, data_path, agebs):
 
     pop_income = pd.concat(
         [
@@ -178,8 +178,12 @@ def get_income_df(ds, df_censo, df_ind, data_path, state_code, agebs):
     pop_income['income_pc'] = pop_income.income/pop_income.total_ipf
 
     # Import geo data
-    agebs_gdf = gpd.read_file(
-        f'{data_path}/agebs.zip', layer=f'{state_code:02d}a')
+    scodes = np.unique([a[:2] for a in agebs])
+    agebs_gdf = pd.concat([
+        gpd.read_file(
+            f'{data_path}/agebs.zip', layer=f'{scode}a')
+        for scode in scodes
+    ])
     agebs_gdf = agebs_gdf.to_crs(agebs_gdf.estimate_utm_crs())
     agebs_gdf.columns = [i.lower() for i in agebs_gdf.columns]
     agebs_gdf.set_index('cvegeo', inplace=True)

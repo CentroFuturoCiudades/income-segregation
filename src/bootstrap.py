@@ -99,7 +99,7 @@ def plot_ci(points_estimates, c_intervals, o_file=None):
         fig.savefig(o_file)
 
 
-def get_bs_samples(n_samples, state_code, met_zone_codes,
+def get_bs_samples(n_samples, met_zone_codes,
                    opath, data_path='./data/',
                    q=5, k_list=[5, 100]):
     opath = Path(opath)
@@ -107,8 +107,7 @@ def get_bs_samples(n_samples, state_code, met_zone_codes,
 
     # Run workflow with original sample, save all to disk
     print('Running with original sample ...')
-    base_results = get_seg_full(state_code,
-                                met_zone_codes,
+    base_results = get_seg_full(met_zone_codes,
                                 q=q, k_list=k_list,
                                 data_path=data_path, out_path=opath,
                                 write_to_disk=True)
@@ -118,7 +117,7 @@ def get_bs_samples(n_samples, state_code, met_zone_codes,
         print('No bootstrap requested. Done.')
         return
 
-    client = Client(n_workers=4)
+    client = Client()
 
     meta = dd.utils.make_meta(base_results)
 
@@ -137,8 +136,7 @@ def get_bs_samples(n_samples, state_code, met_zone_codes,
     bs_results = []
     for idxs in bs_idxs:
         # Run the full workflow
-        results = delayed(get_seg_full)(state_code,
-                                        met_zone_codes,
+        results = delayed(get_seg_full)(met_zone_codes,
                                         q=q, k_list=k_list,
                                         data_path=data_path,
                                         write_to_disk=False,

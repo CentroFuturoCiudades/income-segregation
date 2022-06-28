@@ -23,7 +23,7 @@ def res2pd(r):
         {k: [v] for k, v in flatten_res(r).items()})
 
 
-def get_seg_full(state_code, met_zone_codes,
+def get_seg_full(met_zone_codes,
                  linking_cols=['Sexo', 'Edad', 'Nivel', 'SeguroIMSS',
                                'SeguroPriv', 'ConexionInt'],
                  q=5,
@@ -37,14 +37,11 @@ def get_seg_full(state_code, met_zone_codes,
     # Create results dict
     results_dict = {}
 
-    # We also need the full code with appended state code
-    met_zone_codes_full = [c + state_code*1000 for c in met_zone_codes]
-
     # Load survey with processed linking and target columns
     # This discretizes income into q quantiles into
     # columns Ingreso and keeps continuos income in Ingreso_orig.
     df_survey = preprocessing.load_survey(
-        data_path, met_zone_codes_full, linking_cols, q)
+        data_path, met_zone_codes, linking_cols, q)
     # Bootstrap resampling
     if bs_idxs is not None:
         df_survey = df_survey.iloc[bs_idxs].reset_index(drop=True)
@@ -52,8 +49,7 @@ def get_seg_full(state_code, met_zone_codes,
         df_survey.to_csv(out_path / 'survey.csv')
 
     # Load cesus data
-    df_censo = preprocessing.load_census(
-        data_path, state_code, met_zone_codes)
+    df_censo = preprocessing.load_census(data_path, met_zone_codes)
     if write_to_disk:
         df_censo.to_csv(out_path / 'census.csv')
 
@@ -114,7 +110,7 @@ def get_seg_full(state_code, met_zone_codes,
     # contingency tables.
     # Also calculates total and per capita income
     pop_income = ipf.get_income_df(ds, df_censo, df_ind,
-                                   data_path, state_code, agebs)
+                                   data_path, agebs)
     if write_to_disk:
         pop_income.to_file(out_path / 'income_quantiles.gpkg')
 
