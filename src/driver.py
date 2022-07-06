@@ -65,6 +65,8 @@ if __name__ == '__main__':
     met_zone_codes = met_zones[args.CVE_SUN]
 
     opath = Path(f'./output/{args.CVE_SUN}/')
+    if not opath.exists():
+        opath.mkdir(parents=True, exist_ok=True)
     ipath = Path('./data/')
 
     if args.plot:

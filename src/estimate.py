@@ -114,6 +114,10 @@ def get_seg_full(met_zone_codes,
     if write_to_disk:
         pop_income.to_file(out_path / 'income_quantiles.gpkg')
 
+    # Keep only agebs witg geometry (error in marco geo?)
+    agebs = pop_income[~pop_income.geometry.isna()].cvegeo.to_list()
+    pop_income = pop_income.dropna()
+
     # Find local centralization index for top and low percentiles
     cent_idx_dict = {}
     C_list = []
