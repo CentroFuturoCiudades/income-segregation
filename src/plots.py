@@ -232,6 +232,8 @@ def plot_cis(results, res_bs,  fig_path=None):
 
 def make_all(met_zone_codes, opath, inpath):
     fig_path = Path(opath / 'figures')
+    if not fig_path.exists():
+        fig_path.mkdir(parents=True, exist_ok=True)
 
     print('Making figures for metropolitan zone ...')
     print('Loading data ...')

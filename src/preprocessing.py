@@ -147,7 +147,7 @@ def load_census(data_path, met_zone_codes):
 
     # Create CVEGEO column, and drop columns no longer useful
     df_censo['cvegeo'] = df_censo.apply(
-        lambda x: f'{x.ENTIDAD:02}{x.MUN:03}{x.LOC:04}{x.AGEB}',
+        lambda x: f'{x.ENTIDAD:02}{x.MUN:03}{x.LOC:04}{x.AGEB.zfill(4)}',
         axis=1)
     df_censo.drop(
         columns=['ENTIDAD', 'MUN', 'NOM_LOC', 'LOC', 'AGEB', 'NOM_MUN'],

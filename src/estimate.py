@@ -111,12 +111,11 @@ def get_seg_full(met_zone_codes,
     # Also calculates total and per capita income
     pop_income = ipf.get_income_df(ds, df_censo, df_ind,
                                    data_path, agebs)
-    if write_to_disk:
-        pop_income.to_file(out_path / 'income_quantiles.gpkg')
-
     # Keep only agebs witg geometry (error in marco geo?)
     agebs = pop_income[~pop_income.geometry.isna()].cvegeo.to_list()
     pop_income = pop_income.dropna()
+    if write_to_disk:
+        pop_income.to_file(out_path / 'income_quantiles.gpkg')
 
     # Find local centralization index for top and low percentiles
     cent_idx_dict = {}
