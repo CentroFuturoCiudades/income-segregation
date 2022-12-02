@@ -107,17 +107,19 @@ def plot_income_pc(pop_income, met_zone_codes,
     minx, miny, maxx, maxy = pop_income.total_bounds
     ratio = (maxy - miny)/(maxx-minx)
 
-    fig, ax = plt.subplots(1, 2,
+    fig, ax = plt.subplots(2, 1,
                            figsize=(WIDTH, WIDTH*ratio), dpi=DPI,
                            gridspec_kw=dict(hspace=0, wspace=0,
-                                            width_ratios=[1, 0.05]))
+                                            height_ratios=[1, 0.05]))
 
     pop_income = pop_income.copy()
-    # To thousands of USD
-    pop_income['income_pc'] = pop_income['income_pc']/20/1000
+    # To thousands of USD to yearly
+    pop_income['income_pc'] = pop_income['income_pc']*4/19.24/1000
     ax[0].set_axis_off()
     pop_income.plot(column='income_pc', legend=True, ax=ax[0], cax=ax[1],
-                    cmap='viridis', edgecolor='grey', linewidth=LW)
+                    cmap='viridis', edgecolor='grey', linewidth=LW,
+                    legend_kwds={'orientation': 'horizontal',
+                                 'label': 'Thousands USD'})
 
     missing_agebs = get_missing_agebs(
         met_zone_codes, data_path, pop_income)
@@ -149,7 +151,7 @@ def plot_income_q(pop_income, C_ds, res_bs, ax, q, k, vmax):
     pop_income.plot(column=col_name, legend=False, ax=ax,
                     cmap='RdBu', edgecolor='grey', linewidth=LW,
                     vmin=-vmax, vmax=vmax)
-    ax.text(0.05, 0.05, f'Q: {q}, k: {k}', transform=ax.transAxes)
+    ax.text(0.05, 0.05, f'Q: {q}, K: {k}', transform=ax.transAxes)
 
     # Mark non significant agebs
     mask = get_not_significant_mask(res_bs, q, k)
@@ -164,10 +166,11 @@ def plot_cent_idxs(pop_income, C_ds, res_bs, fig_path=None):
     ratio = (maxy - miny)/(maxx-minx)
 
     fig, ax = plt.subplots(
-        2, 3,
+        #2, 3,
+        3, 2,
         figsize=(WIDTH, WIDTH*ratio), dpi=DPI,
         gridspec_kw=dict(hspace=0.02, wspace=0,
-                         width_ratios=[1, 1, 0.05]))
+                         height_ratios=[1, 1, 0.05]))
     # Find maximum abs index
     max_c = abs(
         C_ds['centrality'].sel(
@@ -183,15 +186,17 @@ def plot_cent_idxs(pop_income, C_ds, res_bs, fig_path=None):
                   ax=ax[1, 1], q=5, k=100, vmax=max_c)
 
     gs = ax[0, 0].get_gridspec()
-    cax = fig.add_subplot(gs[:, 2])
+    # cax = fig.add_subplot(gs[:, 2])
+    cax = fig.add_subplot(gs[2, :])
     # remove the underlying axes
-    for axx in ax[:, 2]:
+    for axx in ax[2, :]:
+    # for axx in ax[:, 2]:
         axx.remove()
 
     sm = cm.ScalarMappable(
         norm=mpl.colors.Normalize(vmin=-max_c, vmax=max_c),
         cmap='RdBu')
-    plt.colorbar(sm, cax=cax)
+    plt.colorbar(sm, cax=cax, orientation='horizontal')
 
     if fig_path is not None:
         # fig.savefig(fig_path / 'centrality.eps', dpi=DPI)
@@ -206,13 +211,13 @@ def plot_ci(points_estimates, c_intervals, ax, q, k):
     for i, ci in enumerate(c_intervals):
         ax.plot(i, points_estimates[i], '.k')
     ax.axhline(ls='--', c='k')
-    ax.text(0.55, 0.05, f'Q: {q}, k: {k}', transform=ax.transAxes)
+    ax.text(0.55, 0.05, f'Q: {q}, K: {k}', transform=ax.transAxes)
 
 
 def plot_cis(results, res_bs,  fig_path=None):
-    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, WIDTH),
+    fig, axg = plt.subplots(2, 2, figsize=(WIDTH, WIDTH),
                              dpi=DPI, sharex=True, sharey=True)
-    axes = axes.ravel()
+    axes = axg.ravel()
 
     c_list = ['cent_idx.q_1.k_5', 'cent_idx.q_1.k_100',
               'cent_idx.q_5.k_5', 'cent_idx.q_5.k_100']
@@ -223,6 +228,10 @@ def plot_cis(results, res_bs,  fig_path=None):
         idx = np.argsort(r)
         ci = bootstrap.ci_single(res_bs[c], conf_level=0.99)
         plot_ci(r[idx], ci[idx], ax=ax, q=q, k=k)
+    axg[0, 0].set_ylabel('$CI_K$')
+    axg[1, 0].set_ylabel('$CI_K$')
+    axg[1, 0].set_xlabel('AGEB rank')
+    axg[1, 1].set_xlabel('AGEB rank')
     plt.tight_layout()
 
     if fig_path is not None:
