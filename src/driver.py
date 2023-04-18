@@ -1,9 +1,9 @@
 import argparse
+import os
 from bootstrap import get_bs_samples
 from plots import make_all
 from pathlib import Path
 import yaml
-
 
 met_zones = {
     2: [3, 4, 5],  # Tijuana
@@ -60,6 +60,10 @@ if __name__ == '__main__':
           f" with {args.n_samples} samples.")
 
     # Load met_zones
+
+    if not os.path.exists('./output/met_zones.yaml'):
+        raise Exception("met_zones.yaml not found. Run get_met_zones.py first.")
+    
     with open('./output/met_zones.yaml', 'r') as f:
         met_zones = yaml.safe_load(f)
     met_zone_codes = met_zones[args.CVE_SUN]
