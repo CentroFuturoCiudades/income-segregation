@@ -6,6 +6,7 @@ import ipf
 import seg
 from pathlib import Path
 import pickle
+import warnings
 
 
 def flatten_res(res, prefix=''):
@@ -23,13 +24,16 @@ def res2pd(r):
         {k: [v] for k, v in flatten_res(r).items()})
 
 
-def get_seg_full(met_zone_codes,
-                 linking_cols=['Sexo', 'Edad', 'Nivel', 'SeguroIMSS',
-                               'SeguroPriv', 'ConexionInt'],
-                 q=5,
-                 data_path='./data/', out_path=None,
-                 bs_idxs=None, write_to_disk=False,
-                 k_list=[5, 100]):
+def get_seg_full(
+        met_zone_codes,
+        linking_cols = ['Sexo', 'Edad', 'Nivel', 'SeguroIMSS', 'SeguroPriv', 'ConexionInt'],
+        q = 5,
+        data_path = './data/', 
+        out_path = None,
+        bs_idxs = None, 
+        write_to_disk = False,
+        k_list = [5, 100]
+):
 
     # Configure out_path variables
     if out_path is not None:
@@ -108,9 +112,10 @@ def get_seg_full(met_zone_codes,
     # Create a dataframe with population per income bracket per ageb
     # Marginalizing over all other variables in all local
     # contingency tables.
+    
     # Also calculates total and per capita income
-    pop_income = ipf.get_income_df(ds, df_censo, df_ind,
-                                   data_path, agebs)
+    pop_income = ipf.get_income_df(ds, df_censo, df_ind, data_path, agebs)
+    
     # Keep only agebs witg geometry (error in marco geo?)
     agebs = pop_income[~pop_income.geometry.isna()].cvegeo.to_list()
     pop_income = pop_income.dropna()
@@ -124,10 +129,17 @@ def get_seg_full(met_zone_codes,
         xname = f'q_{qq}'
         cent_idx_dict[xname] = {}
         C, nlist, dlist = seg.local_cent(pop_income, x_name=xname)
+
+        max_k = C.shape[1] - 1
         for k in k_list:
+            if k > max_k:
+                k = max_k
+                warnings.warn('k greater than number of entries in DataFrame. Value has been automatically adjusted.')
             cent_idx_dict[xname][f'k_{k}'] = C[:, k].copy()
+
         if write_to_disk:
             C_list.append(C)
+
     results_dict['cent_idx'] = cent_idx_dict
     if write_to_disk:
         C_xr = xr.DataArray(data=np.stack(C_list, axis=0),
