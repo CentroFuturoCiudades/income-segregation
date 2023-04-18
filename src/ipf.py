@@ -141,29 +141,27 @@ def weight_ind_fast(df, ds, agebs):
 
         # A small dataframe with individuals with the same
         # combination of variables
-        single_class_df = df_w.loc[idx]
+        # single_class_df = df_w.loc[idx]
+        n_ind = len(df_w.loc[idx])
 
         # Distribute weight uniformly among all individuals
-        n_ind = len(single_class_df)
-        single_class_df[columns] = np.broadcast_to(
-            row.values/n_ind, (n_ind, len(row)))
+        df_w.loc[idx, columns] = np.broadcast_to(
+            row.values/n_ind, (n_ind, len(row))
+        )
         # df_w.loc[idx] = single_class_df
 
     return df_w
 
 
 def get_income_df(ds, df_censo, df_ind, data_path, agebs):
-
-    pop_income = pd.concat(
-        [
-            ctable.sum(
-                dim=[
-                    d for d in ctable.dims if d != 'Ingreso'
-                ]).to_dataframe(name=cvegeo).T
-            for cvegeo, ctable in ds.items()
-            if cvegeo in agebs
-        ])
-
+    to_concat = []
+    dim = [d for d in ds.dims if d != 'Ingreso']
+    for cvegeo, ctable in ds.items():
+        if cvegeo in agebs:
+            df = ctable.sum(dim=dim).to_dataframe(name=cvegeo).T
+            to_concat.append(df)
+            
+    pop_income = pd.concat(to_concat)
     pop_income['total_ipf'] = pop_income.sum(axis=1)
 
     pop_income.index.name = 'cvegeo'

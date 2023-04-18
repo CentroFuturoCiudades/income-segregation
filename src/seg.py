@@ -123,8 +123,7 @@ def local_cent(gdf, x_name='q_5', total_name='total_ipf'):
     yp = gdf.geometry.centroid.y.values[:, None]
     points = np.hstack([xp, yp])
     tree = KDTree(points)
-    dlist, nlist = tree.query(points, k=len(points),
-                              sort_results=True, return_distance=True)
+    dlist, nlist = tree.query(points, k=len(points), sort_results=True, return_distance=True)
 
     # Get an array of population counts for the required quantile
     totals_list = gdf[total_name].values
