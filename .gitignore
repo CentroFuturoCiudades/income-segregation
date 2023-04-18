@@ -3,3 +3,5 @@ src/__pycache__/
 output
 *.ipynb
 dask-worker-space/
+poetry.lock
+pyproject.toml
