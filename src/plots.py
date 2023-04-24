@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import xarray as xr
 import matplotlib as mpl
@@ -45,7 +47,8 @@ def plot_H_KL(df_cdf, norm_H_series, mean_kl_series, fig_path=None):
     ax_2.tick_params(axis='y', colors='grey')
     ax_2.yaxis.label.set_color('grey')
     ax_2.set_ylabel(
-        r'$E\left[D_{KL}\left(Y_p |\  J\parallel Y_p\right)\right]$')
+        r'$E\left[D_{KL}\left(Y_p |\  J\parallel Y_p\right)\right]$'
+    )
     ax_2.plot(df_cdf.w_MZ.values[:-1], mean_kl_series.values,
               color='grey')
 
@@ -58,10 +61,9 @@ def plot_H_KL(df_cdf, norm_H_series, mean_kl_series, fig_path=None):
     ax_ins.semilogx(df_cdf.index, df_cdf.w_MZ, color='k', lw=2)
     ax_ins.set_xlabel('$y$')
 
-    plt.tight_layout()
     if fig_path is not None:
         # fig.savefig(fig_path / 'cont_variables.eps', dpi=DPI)
-        fig.savefig(fig_path / 'cont_variables.pdf', dpi=DPI)
+        fig.savefig(fig_path / 'cont_variables.pdf', dpi=DPI, bbox_inches="tight")
 
 
 def plot_local_c_profiles(C_ds, extension='bokeh', q=5):
@@ -246,8 +248,14 @@ def make_all(met_zone_codes, opath, inpath):
 
     print('Making figures for metropolitan zone ...')
     print('Loading data ...')
-    with open(opath / 'results.pkl', 'rb') as f:
-        results = pickle.load(f)
+
+    res_path = opath / 'results.pkl'
+    if os.path.exists(res_path):
+        with open(res_path, 'rb') as f:
+            results = pickle.load(f)
+    else:
+        raise Exception("Results file not found. Run driver.py without the --plot flag first.")
+    
     pop_income = gpd.read_file(opath / 'income_quantiles.gpkg')
     df_cdf = pd.read_csv(opath / 'ecdf_income_per_ageb.csv',
                          index_col='Ingreso_orig')
@@ -263,13 +271,16 @@ def make_all(met_zone_codes, opath, inpath):
     print('Making plot of continuous variables ...')
     plot_H_KL(df_cdf, norm_H_series, mean_kl_series, fig_path)
     print('Done.')
+
     print('Making plot of income per capita ...')
     plot_income_pc(pop_income, met_zone_codes,
                    inpath, fig_path)
     print('Done.')
+    
     print('Making plot of centrality index ...')
     plot_cent_idxs(pop_income, C_ds, res_bs, fig_path)
     print('Done.')
-    print('Making plot of conficende intervals ...')
+    
+    print('Making plot of confidence intervals ...')
     plot_cis(results, res_bs,  fig_path)
     print('Done.')
