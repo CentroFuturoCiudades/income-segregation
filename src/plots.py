@@ -1,20 +1,23 @@
+import bootstrap
 import os
+import pickle
+import re
+import warnings
 
-import numpy as np
-import xarray as xr
+import datashader as ds
+import geopandas as gpd
+import holoviews as hv
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import xarray as xr
+
+from holoviews.operation.datashader import datashade
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib import cm
-import datashader as ds
-import holoviews as hv
-from holoviews.operation.datashader import datashade
-import pandas as pd
-import geopandas as gpd
-import bootstrap
 from pathlib import Path
-import pickle
-from collections import defaultdict
+
 
 
 WIDTH = 6.4
@@ -173,19 +176,31 @@ def plot_cent_idxs(pop_income, C_ds, res_bs, fig_path=None):
         figsize=(WIDTH, WIDTH*ratio), dpi=DPI,
         gridspec_kw=dict(hspace=0.02, wspace=0,
                          height_ratios=[1, 1, 0.05]))
+    
+    # Get max number of k_neighbors
+    max_k = C_ds["k_neighbors"].max().item()
+    max_k = min(max_k, 100)
+
+    # Error if less than 5 neighbors
+    if max_k < 5:
+        raise Exception("Less than 5 k-neighbors found.")
+
+    if max_k < 100:
+        warnings.warn("Max number of k-neighbors less than 100. Value has been automatically adjusted.")
+    
     # Find maximum abs index
     max_c = abs(
         C_ds['centrality'].sel(
-            income_quantile=[1, 5], k_neighbors=[5, 100])).max().item()
+            income_quantile=[1, 5], k_neighbors=[5, max_k])).max().item()
 
     plot_income_q(pop_income, C_ds, res_bs,
                   ax=ax[0, 0], q=1, k=5, vmax=max_c)
     plot_income_q(pop_income, C_ds, res_bs,
-                  ax=ax[0, 1], q=1, k=100, vmax=max_c)
+                  ax=ax[0, 1], q=1, k=max_k, vmax=max_c)
     plot_income_q(pop_income, C_ds, res_bs,
                   ax=ax[1, 0], q=5, k=5, vmax=max_c)
     plot_income_q(pop_income, C_ds, res_bs,
-                  ax=ax[1, 1], q=5, k=100, vmax=max_c)
+                  ax=ax[1, 1], q=5, k=max_k, vmax=max_c)
 
     gs = ax[0, 0].get_gridspec()
     # cax = fig.add_subplot(gs[:, 2])
@@ -223,6 +238,17 @@ def plot_cis(results, res_bs,  fig_path=None):
 
     c_list = ['cent_idx.q_1.k_5', 'cent_idx.q_1.k_100',
               'cent_idx.q_5.k_5', 'cent_idx.q_5.k_100']
+    
+    c_list = []
+    for col in res_bs.columns:
+        result = re.search(r"cent_idx\.q_(\d{1,2})\.k_(\d{1,2})", col)
+        if result:
+            q, k = result.groups()
+            q, k = int(q), int(k)
+            if q == 1 or q == 5:
+                out_str = f"cent_idx.q_{q}.k_{k}"
+                c_list.append(out_str)
+
     for c, ax in zip(c_list, axes):
         q = c.split('q_')[1].split('.')[0]
         k = c.split('k_')[1].split('.')[0]
