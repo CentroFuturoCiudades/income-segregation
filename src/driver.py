@@ -1,9 +1,11 @@
 import argparse
 import os
+import time
+import yaml
+
 from bootstrap import get_bs_samples
 from plots import make_all
 from pathlib import Path
-import yaml
 
 met_zones = {
     2: [3, 4, 5],  # Tijuana
@@ -43,16 +45,27 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Estimate segregation indices using IPF '
         'with bootstraping confidence intervals.')
-    parser.add_argument('CVE_SUN',
-                        help="Metropolitan zone identifier from "
-                        "the national urban system (SUN)."
-                        " See met_zones.yaml for a list.")
-    parser.add_argument('-n', '--n_samples', type=check_positive, default=0,
-                        help="Number of bootstrap samples to use,"
-                        "defaults to 0 for no bootstraping.")
-    parser.add_argument('--plot', action='store_true',
-                        help="Make plots for the respective sate. "
-                        "Assumes output files have been created.")
+    parser.add_argument(
+        'CVE_SUN',
+        help="Metropolitan zone identifier from the national urban system (SUN). See met_zones.yaml for a list."
+    )
+    parser.add_argument(
+        '-n', 
+        '--n_samples', 
+        type=check_positive, 
+        default=0,
+        help="Number of bootstrap samples to use, defaults to 0 for no bootstraping."
+    )
+    parser.add_argument(
+        '--plot', 
+        action='store_true',
+        help="Make plots for the respective state. Assumes output files have been created."
+    )
+    parser.add_argument(
+        "--time", 
+        action="store_true", 
+        help="Print total execution time.",
+    )
 
     args = parser.parse_args()
     assert args.n_samples <= 10000
@@ -77,8 +90,16 @@ if __name__ == '__main__':
         make_all(met_zone_codes,
                  opath, ipath)
     else:
-        get_bs_samples(args.n_samples,
-                       met_zone_codes,
-                       opath=opath,
-                       data_path=ipath,
-                       q=5, k_list=[5, 100])
+        start_time = time.time()
+        get_bs_samples(
+            args.n_samples,
+            met_zone_codes,
+            opath=opath,
+            data_path=ipath,
+            q=5, 
+            k_list=[5, 100]
+        )
+        stop_time = time.time()
+
+        if args.time:
+            print(f"Total time: {stop_time - start_time}")
