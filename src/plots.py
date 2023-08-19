@@ -137,8 +137,9 @@ def plot_income_pc(pop_income, met_zone_codes,
 
 
 def get_not_significant_mask(res_bs, q, k):
-    c = f'cent_idx.q_{q}.k_{k}'
-    ci = bootstrap.ci_single(res_bs[c], conf_level=0.99)
+    prefix = f'cent_idx.q_{q}.k_{k}'
+    wanted_cols = [col for col in res_bs.columns if col.startswith(prefix)]
+    ci = bootstrap.ci_single(res_bs[wanted_cols], conf_level=0.99)
     mask = (np.sign(ci[:, 0]) != np.sign(ci[:, 1]))
     return mask
 
@@ -252,9 +253,15 @@ def plot_cis(results, res_bs,  fig_path=None):
     for c, ax in zip(c_list, axes):
         q = c.split('q_')[1].split('.')[0]
         k = c.split('k_')[1].split('.')[0]
-        r = results[c].iloc[0]
+        
+        wanted_cols = [col for col in res_bs.columns if col.startswith(c)]
+        
+        r = res_bs[wanted_cols].iloc[0]
+        r = np.array(r)
         idx = np.argsort(r)
-        ci = bootstrap.ci_single(res_bs[c], conf_level=0.99)
+
+        ci = bootstrap.ci_single(res_bs[wanted_cols], conf_level=0.99)
+
         plot_ci(r[idx], ci[idx], ax=ax, q=q, k=k)
     axg[0, 0].set_ylabel('$CI_K$')
     axg[1, 0].set_ylabel('$CI_K$')

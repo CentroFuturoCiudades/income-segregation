@@ -1,12 +1,14 @@
-import pandas as pd
-import numpy as np
-import xarray as xr
 import preprocessing
 import ipf
 import seg
-from pathlib import Path
 import pickle
 import warnings
+
+import pandas as pd
+import numpy as np
+import xarray as xr
+
+from pathlib import Path
 
 
 def flatten_res(res, prefix=''):
@@ -21,7 +23,24 @@ def flatten_res(res, prefix=''):
 
 def res2pd(r):
     return pd.DataFrame.from_dict(
-        {k: [v] for k, v in flatten_res(r).items()})
+        {k: [v] for k, v in flatten_res(r).items()}
+    )
+
+
+def reshape_results(results_dict):
+    results_reshaped = dict(
+        median_MZ = [results_dict["median_MZ"]],
+        H = [results_dict["H"]]
+    )
+
+    for quantile in results_dict["cent_idx"]:
+        for k in results_dict["cent_idx"][quantile]:
+            for i, elem in enumerate(results_dict["cent_idx"][quantile][k]):
+                key = f"cent_idx.{quantile}.{k}.{i}"
+                results_reshaped[key] = [elem]
+
+    results_reshaped = pd.DataFrame.from_dict(results_reshaped)
+    return results_reshaped
 
 
 def get_seg_full(
@@ -159,7 +178,8 @@ def get_seg_full(
                        engine='netcdf4')
 
     # Return a dataframe
-    results = res2pd(results_dict)
+    # results = res2pd(results_dict)
+    results = reshape_results(results_dict)
     if write_to_disk:
         # Store results as a pickle object
         with open(out_path / 'results.pkl', 'wb') as f:
