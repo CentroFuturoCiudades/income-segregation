@@ -232,7 +232,7 @@ def plot_ci(points_estimates, c_intervals, ax, q, k):
     ax.text(0.55, 0.05, f'Q: {q}, K: {k}', transform=ax.transAxes)
 
 
-def plot_cis(results, res_bs,  fig_path=None):
+def plot_cis(res_bs,  fig_path=None):
     fig, axg = plt.subplots(2, 2, figsize=(WIDTH, WIDTH),
                              dpi=DPI, sharex=True, sharey=True)
     axes = axg.ravel()
@@ -282,12 +282,12 @@ def make_all(met_zone_codes, opath, inpath):
     print('Making figures for metropolitan zone ...')
     print('Loading data ...')
 
-    res_path = opath / 'results.pkl'
-    if os.path.exists(res_path):
-        with open(res_path, 'rb') as f:
-            results = pickle.load(f)
-    else:
-        raise Exception("Results file not found. Run driver.py without the --plot flag first.")
+    # res_path = opath / 'results.pkl'
+    # if os.path.exists(res_path):
+    #     with open(res_path, 'rb') as f:
+    #         results = pickle.load(f)
+    # else:
+    #     raise Exception("Results file not found. Run driver.py without the --plot flag first.")
     
     pop_income = gpd.read_file(opath / 'income_quantiles.gpkg')
     df_cdf = pd.read_csv(opath / 'ecdf_income_per_ageb.csv',
@@ -315,5 +315,5 @@ def make_all(met_zone_codes, opath, inpath):
     print('Done.')
     
     print('Making plot of confidence intervals ...')
-    plot_cis(results, res_bs,  fig_path)
+    plot_cis(res_bs,  fig_path)
     print('Done.')

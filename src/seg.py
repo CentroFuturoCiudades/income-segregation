@@ -1,7 +1,5 @@
 import numpy as np
-import xarray as xr
-import pandas as pd
-import geopandas as gdp
+
 from scipy import integrate
 from scipy.special import xlogy
 from sklearn.neighbors import KDTree

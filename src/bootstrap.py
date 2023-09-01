@@ -136,12 +136,16 @@ def get_bs_samples(n_samples, met_zone_codes,
     bs_results = []
     for idxs in bs_idxs:
         # Run the full workflow
-        results = delayed(get_seg_full)(met_zone_codes,
-                                        q=q, k_list=k_list,
-                                        data_path=data_path,
-                                        write_to_disk=False,
-                                        bs_idxs=idxs)
-        bs_results.append(results)
+        results = delayed(get_seg_full)(
+            met_zone_codes,
+            q=q, 
+            k_list=k_list,
+            data_path=data_path,
+            write_to_disk=False,
+            bs_idxs=idxs
+        )
+        
+    bs_results.append(results)
     results_df = dd.from_delayed(bs_results, meta=meta)
     results_df.to_parquet(opath / 'bs_results.parquet')
     print('Done.')
