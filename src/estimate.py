@@ -119,8 +119,14 @@ def get_seg_full(
     # kl_df the same as above but unormalized, so E[KL] over all agebs
     # local_dev_df: contains local H deviations for all agebs(cols) for
     # all percentiles (rows)
-    (H, df_cdf, norm_H_series,
-     mean_kl_series, local_kl) = seg.global_H_index(df_ind, agebs)
+    (
+        H, 
+        df_cdf, 
+        norm_H_series,
+        mean_kl_series, 
+        local_kl
+    ) = seg.global_H_index(df_ind, agebs)
+
     results_dict['H'] = H
     if write_to_disk:
         df_cdf.to_csv(out_path / 'ecdf_income_per_ageb.csv')
@@ -178,7 +184,6 @@ def get_seg_full(
                        engine='netcdf4')
 
     # Return a dataframe
-    # results = res2pd(results_dict)
     results = reshape_results(results_dict)
     if write_to_disk:
         # Store results as a pickle object

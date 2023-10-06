@@ -1,13 +1,14 @@
-import numpy as np
-from numpy.random import default_rng
-import pandas as pd
-from scipy.optimize import brentq
-import matplotlib.pyplot as plt
-from pathlib import Path
-from dask.distributed import Client
-from dask import delayed
 import dask.dataframe as dd
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from dask import delayed
+from dask.distributed import Client
 from estimate import get_seg_full
+from numpy.random import default_rng
+from pathlib import Path
+from scipy.optimize import brentq
 
 
 def ci_single(x, conf_level=0.95):
@@ -37,7 +38,7 @@ def ci_simultaneous(alpha_col, x, return_mask=False):
     a_lower = alpha_col/2
     a_upper = 1 - a_lower
 
-    n_samples, n_vars = x.shape
+    n_samples, _ = x.shape
 
     # Quantiles
     ci = np.quantile(x, [a_lower, a_upper], axis=0)
@@ -101,16 +102,20 @@ def plot_ci(points_estimates, c_intervals, o_file=None):
 
 def get_bs_samples(n_samples, met_zone_codes,
                    opath, data_path='./data/',
-                   q=5, k_list=[5, 100]):
+                   q=5, k_list=[5, 100], seed=123456):
     opath = Path(opath)
     data_path = Path(data_path)
 
     # Run workflow with original sample, save all to disk
     print('Running with original sample ...')
-    base_results = get_seg_full(met_zone_codes,
-                                q=q, k_list=k_list,
-                                data_path=data_path, out_path=opath,
-                                write_to_disk=True)
+    base_results = get_seg_full(
+        met_zone_codes,
+        q=q, 
+        k_list=k_list,
+        data_path=data_path, 
+        out_path=opath,
+        write_to_disk=True
+    )
     print('Done.')
 
     if n_samples == 0:
@@ -125,7 +130,7 @@ def get_bs_samples(n_samples, met_zone_codes,
     n_ind = len(survey)
 
     # Seed for reproducibility
-    rng = default_rng(seed=123456)
+    rng = default_rng(seed=seed)
 
     # Get indices for all bs samples as an array
     bs_idxs = rng.integers(0, n_ind, size=(n_samples, n_ind))
@@ -144,7 +149,7 @@ def get_bs_samples(n_samples, met_zone_codes,
             write_to_disk=False,
             bs_idxs=idxs
         )
-        
+
     bs_results.append(results)
     results_df = dd.from_delayed(bs_results, meta=meta)
     results_df.to_parquet(opath / 'bs_results.parquet')

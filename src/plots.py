@@ -137,7 +137,7 @@ def plot_income_pc(pop_income, met_zone_codes,
 
 
 def get_not_significant_mask(res_bs, q, k):
-    prefix = f'cent_idx.q_{q}.k_{k}'
+    prefix = f'cent_idx.q_{q}.k_{k}.'
     wanted_cols = [col for col in res_bs.columns if col.startswith(prefix)]
     ci = bootstrap.ci_single(res_bs[wanted_cols], conf_level=0.99)
     mask = (np.sign(ci[:, 0]) != np.sign(ci[:, 1]))

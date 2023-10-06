@@ -14,16 +14,6 @@ def binary_entropy(p):
     return e
 
 
-def discrete_KL(P, Q):
-    P = np.asarray(P)
-    Q = np.asarray(Q)
-
-    KL = P*np.log(P/Q)
-    KL = KL.sum()
-
-    return KL
-
-
 def local_binary_KL(p_local, p_global):
     p_local = np.asarray(p_local)
     p_global = np.asarray(p_global)
@@ -34,34 +24,6 @@ def local_binary_KL(p_local, p_global):
     # KL += (1 - p_local)*np.log2((1 - p_local)/(1 - p_global))
 
     return KL/np.log(2)
-
-
-def cont_KL(p, q, x):
-    x = np.asarray(x)
-    p = np.asarray(p)
-    q = np.asarray(q)
-
-    KL = p*np.log(p/q)
-    KL = integrate.simpson(y=KL, x=x)
-
-    return KL
-
-
-def local_bin_normalized_dev(p_local, p_global):
-    p_local = np.asarray(p_local)
-    p_global = np.asarray(p_global)
-
-    x = binary_entropy(p_global) - binary_entropy(p_local)
-    x /= binary_entropy(p_global)
-    return x
-
-
-def binary_entropy_index(p_local, px, p_global):
-    p_local = np.asarray(p_local)
-    px = np.asarray(px)
-    p_global = np.asarray(p_global)
-
-    return np.sum(px*local_bin_normalized_dev(p_local, p_global))
 
 
 def global_H_index(df_ind, agebs):
@@ -93,7 +55,7 @@ def global_H_index(df_ind, agebs):
     # of local deviations
     # entropy_index_df = local_deviations.multiply(pn).sum(axis=1)
     mean_kl_series = local_kl.multiply(pn).sum(axis=1)
-    norm_H_series = mean_kl_series/binary_entropy(df_cdf.w_MZ.values[:-1])
+    norm_H_series = mean_kl_series / binary_entropy(df_cdf.w_MZ.values[:-1])
 
     # But the above is not the function to integrate,
     # we must multiply by E(p) to recovr the
@@ -105,8 +67,7 @@ def global_H_index(df_ind, agebs):
     # global entropy , it seems safe to integrate numerically the KL
     # function directly, despite the high level of noise at the tails
     # of H (see plots)
-    H = integrate.simpson(
-        y=mean_kl_series.values, x=df_cdf.w_MZ.values[:-1])
+    H = integrate.simpson(y=mean_kl_series.values, x=df_cdf.w_MZ.values[:-1])
 
     # Return the cdf, the local_h, the expected kl, and H
     return (H, df_cdf, norm_H_series, mean_kl_series,

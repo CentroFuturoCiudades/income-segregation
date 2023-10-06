@@ -7,27 +7,6 @@ from bootstrap import get_bs_samples
 from plots import make_all
 from pathlib import Path
 
-met_zones = {
-    2: [3, 4, 5],  # Tijuana
-    14: [2, 39, 44, 51, 70, 97, 98, 101, 120, 124],  # Guadalajara
-    19:  [1,  6,  9, 10, 12, 18, 19, 21, 25,
-          26, 31, 39, 41, 45, 46, 47, 48, 49],  # Monterrey
-    22: [6, 8, 11, 14],  # Querétaro (missing one, 11004)
-    31: [2, 13, 38, 41, 50, 63, 90, 93, 95, 100, 101]  # Mérida
-}
-
-
-def check_state(value):
-    try:
-        value = int(value)
-        if value > 32 or value < 1:
-            raise argparse.ArgumentTypeError(
-                "{} is not a valid state code.".format(value))
-    except ValueError:
-        raise argparse.ArgumentTypeError(
-            "{} is not a valid state code.".format(value))
-    return value
-
 
 def check_positive(value):
     try:
@@ -66,6 +45,12 @@ if __name__ == '__main__':
         action="store_true", 
         help="Print total execution time.",
     )
+    parser.add_argument(
+        "--seed",
+        default=123456,
+        type=int,
+        help="Seed for random number generation."
+    )
 
     args = parser.parse_args()
     assert args.n_samples <= 10000
@@ -87,8 +72,7 @@ if __name__ == '__main__':
     ipath = Path('./data/')
 
     if args.plot:
-        make_all(met_zone_codes,
-                 opath, ipath)
+        make_all(met_zone_codes, opath, ipath)
     else:
         start_time = time.time()
         get_bs_samples(
@@ -97,7 +81,8 @@ if __name__ == '__main__':
             opath=opath,
             data_path=ipath,
             q=5, 
-            k_list=[5, 100]
+            k_list=[5, 100],
+            seed=args.seed
         )
         stop_time = time.time()
 

@@ -14,7 +14,8 @@ for mpath in met_paths:
     point_med_income = results.median_MZ.iloc[0]
 
     res_bs = pd.read_parquet(
-        mpath / 'bs_results.parquet/').reset_index(drop=True)
+        mpath / 'bs_results.parquet/'
+    ).reset_index(drop=True)
     median_ci = bootstrap.ci_single(res_bs['median_MZ'])
     H_ci = bootstrap.ci_single(res_bs['H'])
 
